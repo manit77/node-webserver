@@ -2,14 +2,15 @@ FROM node:18.18.2-buster
 
 WORKDIR /app
 
-#Copy the build directory
-
-# Copy in package.json and package-lock.json
-# Copy in source code and other assets
+#Copy assets
 ADD build /app
 ADD node_modules /app/node_modules
 COPY pm2.yml .
 
+#show working directory
+RUN ls /app -la
+
+#install npm
 RUN npm install pm2 -g
 
 # Configure ENV
