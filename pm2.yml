@@ -1,0 +1,6 @@
+module.exports = [{
+  script: 'build/index.js',
+  name: 'webserver',
+  exec_mode: 'cluster',
+  instances: 2
+}]
