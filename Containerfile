@@ -10,6 +10,8 @@ ADD build /app
 ADD node_modules /app/node_modules
 COPY pm2.yml .
 
+RUN npm install pm2 -g
+
 # Configure ENV
 ENV NODE_ENV=production
 ENV WEB_SERVER_PORT 8080
