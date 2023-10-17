@@ -6,8 +6,9 @@ WORKDIR /app
 
 # Copy in package.json and package-lock.json
 # Copy in source code and other assets
-COPY --chown=1001:1001 build .
-COPY --chown=1001:1001 node_modules .
+ADD build /app
+copy node_modules /app
+COPY pm2.yml .
 
 # Install dependencies and devDependencies
 RUN npm install pm2 -g

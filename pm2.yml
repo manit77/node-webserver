@@ -1,6 +1,5 @@
-module.exports = [{
-  script: 'build/index.js',
-  name: 'webserver',
-  exec_mode: 'cluster',
-  instances: 2
-}]
+apps:
+  - script   : ./index.js
+    name     : 'node-web-server'
+    instances: 1
+    exec_mode: cluster_mode
