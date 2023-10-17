@@ -19,5 +19,4 @@ EXPOSE 8080
 
 # Launch the container by passing these parameters to the entrypoint
 # These parameters can be overridden if you’d like
-#CMD ["pm2-runtime", "pm2.yml"]
-CMD ["cd /app", "ls -la"]
+CMD ["pm2-runtime", "pm2.yml"]
