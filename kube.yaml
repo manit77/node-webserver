@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name:  node-web-server
+  name: node-webserver
   namespace: corrjms
   labels:
-    app:  node-web-server
+    app: node-webserver
 spec:
   selector:
     matchLabels:
-      app: node-web-server
+      app: node-webserver
   replicas: 1
   strategy:
     rollingUpdate:
@@ -18,53 +18,34 @@ spec:
   template:
     metadata:
       labels:
-        app:  node-web-server
-    spec:     
+        app: node-webserver
+    spec:
       containers:
-      - name:  node-web-server
-        image:  10.20.1.70/node-webserver:latest
-        resources:
-          requests:
-            cpu: 100m
-            memory: 100Mi
-          limits:
-            cpu: 100m
-            memory: 100Mi
-        livenessProbe:
-          tcpSocket:
-            port: 80
-          initialDelaySeconds: 5
-          timeoutSeconds: 5
-          successThreshold: 1
-          failureThreshold: 3
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /_status/healthz
-            port: 80
-          initialDelaySeconds: 5
-          timeoutSeconds: 2
-          successThreshold: 1
-          failureThreshold: 3
-          periodSeconds: 10        
-        ports:
-        - containerPort:  8080
-          name:  node-web-server
+        - name: node-webserver
+          image: docker.corrections-tech.com/node-webserver
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
+          ports:
+            - containerPort: 8080
+              name: node-webserver
 
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
-  name: node-web-server
+  name: node-webserver
   namespace: corrjms
 spec:
   selector:
-    app: node-web-server
-  type: NodePort 
+    app: node-webserver
+  type: NodePort
   ports:
-  - name: node-web-server
-    protocol: TCP
-    port: 8080
-    targetPort: 8080
-    
+    - name: node-webserver
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
