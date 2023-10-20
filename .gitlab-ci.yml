@@ -10,22 +10,17 @@ before_script:
   - id
   - pwd
   - hostname
-  - ifconfig
-  #- npm ci --cache .npm --prefer-offline
-  - echo *** before script ***
-  # npm ci --cache .npm --prefer-offline --no-audit
-  # unique hash of required dependencies
-  - PACKAGE_HASH=($(md5sum package.json))
-  # path to cache file
-  - DEPS_CACHE=/tmp/node_webserver_node_modules_${PACKAGE_HASH}.tar.gz
-  # Check if cache file exists and if not, create it
+  - ifconfig  
+  - echo *** before script ***    
+  - PACKAGE_HASH=($(md5sum package.json))  
+  - DEPS_CACHE=/tmp/node_webserver_node_modules_${PACKAGE_HASH}.tar.gz  
   - if [ -f $DEPS_CACHE ];
     then
       echo tar zxf $DEPS_CACHE
       tar zxf $DEPS_CACHE;
     else
-      echo npm install
-      npm install --quiet;
+      echo npm install 
+      npm install --omit=dev --quiet;
       tar zcf - ./node_modules > $DEPS_CACHE;
     fi
 stages:
@@ -66,6 +61,4 @@ deploy:
     - echo CI_COMMIT_BRANCH=${CI_COMMIT_BRANCH}
     - echo CI_COMMIT_REF_SLUG=${CI_COMMIT_REF_SLUG}
     - go run build.go
-    - cd build
-    - buildah bud -t node-webserver:latest
-    - podman push node-webserver:latest docker.corrections-tech.com/node-webserver
+    

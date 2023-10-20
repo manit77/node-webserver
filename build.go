@@ -30,52 +30,58 @@ func main() {
 	var app_name string
 	var version string
 	var builddate string
+	var currentDir string
 
+	currentDir, err = goutils.GetCurrentDirectory()
+	fmt.Println("currentDir=", currentDir)
+
+	// ## get build date
 	now := time.Now()
 	builddate = now.Format("2006-01-02 15:04") //YYYY-MM-dd HH mm
 
+	// ## set build output directories from node build
 	builddir := "build"
 	buildappdir := "build/app"
 
-	// build config file path
-	build_config_path = getBuildConfigPath()
-
-	if build_config_path == "" {
-		panic("build_config_path not found")
-	}
-
-	fmt.Println("build_config_path=", build_config_path)
-
-	//get the directory name of the git folder
+	// ## get the directory name of the git folder
 	gitFolder = getGitFolder()
 	gitBranch = getGitBranch()
 	gitCommitHash = getGitCommit(gitBranch)
 	fmt.Println("git=", gitFolder, gitBranch, gitCommitHash)
 
+	// ## determine if master or test
 	if gitBranch == "master" || gitBranch == "main" {
 		env_type = "prod"
 	} else {
 		env_type = "test"
 	}
-
 	fmt.Println("env_type=", env_type)
 
+	// ## get apppconfig path based on env
 	appconfigpath := getAppConfigPath(env_type)
 	appConfigs, err = goutils.ParseJSONFromFile(appconfigpath)
 	fmt.Println("appConfigs=", appConfigs)
 
-	//parse appconfigs
+	// ## get app name and version from appconfig
 	app_name = goutils.ToString(appConfigs["app_name"])
 	version = goutils.ToString(appConfigs["version"])
 	fmt.Println("app_name=", app_name, "version=", version)
 
-	buildConfigs = getBuildConfig(gitFolder, build_config_path)
-	fmt.Println("buildconfigs=", buildConfigs)
+	// ## get build config file path
+	build_config_path = getBuildConfigPath()
+	if build_config_path == "" {
+		panic("build_config_path not found")
+	}
+	fmt.Println("build_config_path=", build_config_path)
 
+	// ## get the build configs
+	buildConfigs = getBuildConfig(gitFolder, build_config_path)
 	if buildConfigs["app_name"] == nil {
 		panic("app config not found")
 	}
+	fmt.Println("buildconfigs=", buildConfigs)
 
+	// #set variables from buildconfigs
 	database_server_name = goutils.ToString(buildConfigs["database_server_name"])
 	database_name = goutils.ToString(buildConfigs["database_server_name"])
 	database_username = goutils.ToString(buildConfigs["database_username"])
@@ -93,6 +99,7 @@ func main() {
 		panic("database_username is empty")
 	}
 
+	// ## populate Dockerfile ENV variables
 	var dockerFileContents string
 	dockerFileContents, err = goutils.ReadFile("Dockerfile")
 	if dockerFileContents != "" {
@@ -111,6 +118,7 @@ func main() {
 		writeError(err)
 	}
 
+	// ## copy the appconfig.json file
 	if env_type == "test" || env_type == "" {
 		err = goutils.CopyFile1("appconfig.test.json", buildappdir+"/appconfig.json")
 		writeError(err)
@@ -127,21 +135,58 @@ func main() {
 		}
 	}
 
-	//update the appconfig branch name and the committhash
+	// ## update the appconfig variables
 	var content = ""
 	content, err = goutils.ReadFile(buildappdir + "/appconfig.json")
 	content = strings.ReplaceAll(content, "{commithash}", gitCommitHash)
 	content = strings.ReplaceAll(content, "{builddate}", builddate)
-
 	err = goutils.WriteFile(buildappdir+"/appconfig.json", content, true)
-	writeError(err)
-
-	//copy pm2
-	err = goutils.CopyFile1("pm2.yml", buildappdir+"/pm2.yml")
 	writeError(err)
 
 	fmt.Println("build complete")
 	os.Exit(0)
+}
+
+func buildContainer(appname string, version string) {
+	// ## build container
+	//- cd build
+	//- buildah bud -t node-webserver:latest
+	//- podman push node-webserver:latest docker.corrections-tech.com/node-webserver
+	currentDir, err := goutils.GetCurrentDirectory()
+	cmd := exec.Command("buildah", "bud", "-t", appname+":"+version)
+	cmd.Dir = currentDir
+
+	err = cmd.Start()
+	if err != nil {
+		fmt.Println(err)
+		panic("container build failed")
+	}
+
+	// Wait for the process to finish.
+	err = cmd.Wait()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Get the output of the process.
+	output, err := cmd.Output()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// Print the output of the process.
+	fmt.Println(string(output))
+}
+
+func publishContainer(registryurl string, appname string, version string) {
+	//- podman push node-webserver:latest docker.corrections-tech.com/node-webserver
+	output, err := goutils.ExecCMD("podman", "push "+appname+":"+version+" "+registryurl+"/"+appname, "")
+	if err != nil {
+		panic("failed to publish container")
+	}
+	fmt.Println(output)
 }
 
 func getGitFolder() string {
