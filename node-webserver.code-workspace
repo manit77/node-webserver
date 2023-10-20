@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "goutils",
+			"path": "../goutils"
+		},
+		{
+			"name": "node-webserver",
+			"path": "."
+		}
+	],
+	"settings": {}
+}

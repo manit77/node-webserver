@@ -1,0 +1,6 @@
+{
+    "app_name": "node-webserver-prod",   
+    "version": "1.0",
+    "commithash": "{commithash}",
+    "builddate": "{builddate}"
+}

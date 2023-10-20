@@ -1,0 +1,71 @@
+image: node:latest
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .npm/
+
+before_script:
+  - whoami
+  - id
+  - pwd
+  - hostname
+  - ifconfig
+  #- npm ci --cache .npm --prefer-offline
+  - echo *** before script ***
+  # npm ci --cache .npm --prefer-offline --no-audit
+  # unique hash of required dependencies
+  - PACKAGE_HASH=($(md5sum package.json))
+  # path to cache file
+  - DEPS_CACHE=/tmp/node_webserver_node_modules_${PACKAGE_HASH}.tar.gz
+  # Check if cache file exists and if not, create it
+  - if [ -f $DEPS_CACHE ];
+    then
+      echo tar zxf $DEPS_CACHE
+      tar zxf $DEPS_CACHE;
+    else
+      echo npm install
+      npm install --quiet;
+      tar zcf - ./node_modules > $DEPS_CACHE;
+    fi
+stages:
+  - build_stage
+  - deploy_stage
+build:
+  stage: build_stage
+  only:
+    - master
+  script:
+    - echo ${CI_COMMIT_BRANCH} ${CI_COMMIT_REF_SLUG}
+    - whoami
+    - id
+    - pwd
+    - hostname
+    - ifconfig
+    - cd ..    
+    - tsc -v
+    - node -v
+    - rm -rf goutils
+    - git -c http.sslVerify=false clone https://git2.corp.loc/dev-team/goutils.git    
+    - npm install --omit=dev
+    - tsc --build --force
+    - cd ../node-webserver
+    - npm install --omit=dev
+    - tsc --build --force
+    - mkdir build/app/node_modules    
+    - cp -r node_modules build/app
+    - cp pm2.yml build/app
+  artifacts:
+    paths:
+      - build
+deploy:
+  stage: deploy_stage
+  only:
+    - master
+  script:
+    - echo CI_COMMIT_BRANCH=${CI_COMMIT_BRANCH}
+    - echo CI_COMMIT_REF_SLUG=${CI_COMMIT_REF_SLUG}
+    - go run build.go
+    - cd build
+    - buildah bud -t node-webserver:latest
+    - podman push node-webserver:latest docker.corrections-tech.com/node-webserver

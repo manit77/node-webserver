@@ -3,7 +3,7 @@ FROM node:18.18.2-buster
 WORKDIR /app
 
 #Copy assets
-ADD build /app
+ADD app /app
 ADD node_modules /app/node_modules
 COPY pm2.yml .
 
@@ -15,7 +15,11 @@ RUN npm install pm2 -g
 
 # Configure ENV
 ENV NODE_ENV=production
-ENV WEB_SERVER_PORT 8080
+ENV webserver_port 8080
+ENV app_name {app_name}
+ENV version {version}
+ENV builddate {builddate}
+ENV commithash {commithash}
 
 #expose the container port
 EXPOSE 8080
