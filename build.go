@@ -120,7 +120,7 @@ func main() {
 
 	// ## copy the appconfig.json file
 	if env_type == "test" || env_type == "" {
-		err = goutils.CopyFile1("appconfig.test.json", buildappdir+"/appconfig.json")
+		err = goutils.CopyFile("appconfig.test.json", buildappdir+"/appconfig.json")
 		writeError(err)
 		if err == nil {
 			fmt.Println("copied appconfig.test.json " + buildappdir + "/appconfig.json")
@@ -128,7 +128,7 @@ func main() {
 	}
 
 	if env_type == "prod" {
-		err = goutils.CopyFile1("appconfig.prod.json", buildappdir+"/appconfig.json")
+		err = goutils.CopyFile("appconfig.prod.json", buildappdir+"/appconfig.json")
 		writeError(err)
 		if err == nil {
 			fmt.Println("copied appconfig.prod.json " + buildappdir + "/appconfig.json")
