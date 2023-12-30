@@ -1,0 +1,17 @@
+[
+    {
+        "gitfolder": "node-webserver",
+        "app_name": "node-webserver",
+        "database_server_name": "na",
+        "database_name": "na",
+        "database_username": "na",
+        "database_password": "na",
+        "container_registry": "prod-dockerregistry.corp.loc",
+        "external_port": "8000",
+        "container_port": "8000",
+        "app_url": "https://node-webserver.corp.loc",
+        "app_url_appconfig": "/appconfig",
+        "docker_manager_url": "http://prod-dockermanager.corp.loc:2375",
+        "container_replicas": 3
+    }
+]

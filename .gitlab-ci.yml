@@ -1,64 +1,69 @@
 image: node:latest
 
+variables:
+  BUILD_ENV: test
+  NODE_ENV: development
+  RUNNER_TAGS: $CI_RUNNER_TAGS
+  GIT_BRANCH: $CI_COMMIT_BRANCH
+  GIT_COMMIT_REF_SLUG: ${CI_COMMIT_REF_SLUG}
+  GIT_SLUG: node_webserver
+  GIT_SHORT_SHA: ${CI_COMMIT_SHORT_SHA}
+  GIT_SHA: ${CI_COMMIT_SHA}
+  CURR_FOLDER: $CI_PROJECT_NAME
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - .npm/
-
+workflow:
+  rules:
+    - if: ($CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "main")
+      variables:
+        BUILD_ENV: prod
+        NODE_ENV: production
+    - if: ($CI_COMMIT_BRANCH == "test")
 before_script:
+  - cat _version.txt
+  - echo before_script
+  - echo $CI_COMMIT_REF_SLUG $CI_COMMIT_BRANCH $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $GIT_SHA 
   - whoami
-  - id
-  - pwd
-  - hostname
-  - ifconfig  
-  - echo *** before script ***    
-  - PACKAGE_HASH=($(md5sum package.json))  
-  - DEPS_CACHE=/tmp/node_webserver_node_modules_${PACKAGE_HASH}.tar.gz  
-  - if [ -f $DEPS_CACHE ];
-    then
-      echo tar zxf $DEPS_CACHE
-      tar zxf $DEPS_CACHE;
-    else
-      echo npm install 
-      npm install --omit=dev --quiet;
-      tar zcf - ./node_modules > $DEPS_CACHE;
-    fi
+  - CURR_DIR=$(pwd)
+  - CURR_FOLDER=$(basename "$CURR_DIR")
+  - echo $CURR_FOLDER
 stages:
   - build_stage
-  - deploy_stage
 build:
   stage: build_stage
-  only:
-    - master
   script:
-    - echo ${CI_COMMIT_BRANCH} ${CI_COMMIT_REF_SLUG}
-    - whoami
+    - echo $BUILD_ENV $RUNNER_TAGS
+    - echo $GIT_BRANCH $GIT_COMMIT_REF_SLUG
+    - echo $NODE_ENV $CURR_FOLDER
     - id
     - pwd
     - hostname
-    - ifconfig
-    - cd ..    
+    - ip link show
+    - echo checkout so we can work with git commands    
+    - PACKAGE_HASH=($(md5sum package.json))
+    - DEPS_CACHE=/tmp/${GIT_SLUG}_node_modules_${PACKAGE_HASH}.tar.gz
+    - echo $DEPS_CACHE $PACKAGE_HASH
+    - if [ -f $DEPS_CACHE ];
+      then
+      tar zxf $DEPS_CACHE;
+      else
+      npm install
+      [ -d "./node_modules" ] && tar zcf - ./node_modules > $DEPS_CACHE;
+      fi
+    - rm -rf build
+    - cd ..
     - tsc -v
     - node -v
     - rm -rf goutils
-    - git -c http.sslVerify=false clone https://git2.corp.loc/dev-team/goutils.git    
-    - npm install --omit=dev
-    - tsc --build --force
-    - cd ../node-webserver
-    - npm install --omit=dev
-    - tsc --build --force
-    - mkdir build/app/node_modules    
+    - git -c http.sslVerify=false clone https://git2.corp.loc/dev-team/goutils.git
+    - rem CUSTOM BUILD ##### Custom Build ##########
+    - rem CUSTOM BUILD  ##### Custom Build ##########
+    - cd ${CURR_FOLDER}    
+    - tsc --build --force    
+    - mkdir build/app/node_modules
     - cp -r node_modules build/app
     - cp pm2.yml build/app
-  artifacts:
-    paths:
-      - build
-deploy:
-  stage: deploy_stage
-  only:
-    - master
-  script:
-    - echo CI_COMMIT_BRANCH=${CI_COMMIT_BRANCH}
-    - echo CI_COMMIT_REF_SLUG=${CI_COMMIT_REF_SLUG}
-    - go run build.go
-    
+    - echo go run build.go -build_env $BUILD_ENV -runner_tags $RUNNER_TAGS -git_branch $GIT_BRANCH -git_sha $GIT_SHA -node_env $NODE_ENV
+    - go run build.go -build_env $BUILD_ENV -runner_tags $RUNNER_TAGS -git_branch $GIT_BRANCH -git_sha $GIT_SHA -node_env $NODE_ENV

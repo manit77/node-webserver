@@ -273,3 +273,4 @@ project.lock.json
 **/public/uploads/*
 **/temp/*
 dev-env.json
+../src/appconfig.json
