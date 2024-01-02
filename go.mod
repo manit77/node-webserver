@@ -2,7 +2,7 @@ module build
 
 go 1.19
 
-replace goutils => ../goutils
+replace goutils => ../go-utils
 
 require goutils v0.0.0
 
