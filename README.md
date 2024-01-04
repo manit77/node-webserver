@@ -1,7 +1,12 @@
-
 # node-webserver
 
-Example NodeJS with Express webserver configured with cors and a public file directory. 
+Example NodeJS with Express webserver configured with cors and a public file directory. Show cases various technologies for automated builds and deployment.
+
+Technologies used:
+
+1. GitLab yaml config for CI/CD
+2. Shell scripting for building TypeScript projects
+3. Go script for reading config files, building docker images, publishing to a docker registry, deploying to docker swarm
 
 ## Description:
 
