@@ -4,7 +4,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"goutils"
+	goutils_data "goutils/data"
+	goutils_io "goutils/io"
+	goutils_web "goutils/web"
 	"log"
 	_ "math"
 	"os"
@@ -21,7 +23,7 @@ func main() {
 	//var ok bool
 	var bc = BuildConfig{}
 
-	bc.currentDir, err = goutils.GetCurrentDirectory()
+	bc.currentDir, err = goutils_io.GetCurrentDirectory()
 	fmt.Println("currentDir=", bc.currentDir)
 
 	// ## set build output directories from node build
@@ -175,7 +177,7 @@ func main() {
 func getGitFolder() (string, error) {
 
 	var rv string
-	rv = goutils.ToString(os.Getenv("CURR_FOLDER"))
+	rv = goutils_data.ToString(os.Getenv("CURR_FOLDER"))
 	if rv > "" {
 		rv = filepath.Base(rv)
 	}
@@ -258,7 +260,7 @@ func getGitCommitSHA(branch string) (string, error) {
 
 	// throws an error due to the way gitlab pulls from the repo: buffer, err := exec.Command("git", "rev-parse", branch).Output()
 	var app_git_sha string
-	app_git_sha = goutils.ToString(os.Getenv("GIT_SHA"))
+	app_git_sha = goutils_data.ToString(os.Getenv("GIT_SHA"))
 	if app_git_sha == "" {
 		buffer, err := exec.Command("git", "rev-parse", branch).Output()
 		app_git_sha = string(buffer)
@@ -289,7 +291,7 @@ func getBuildConfigPath(env_typ string) string {
 	if err == nil {
 		checkpath = path.Join(checkpath, buildfilename)
 		log.Println("UserHomeDir + buildfilename=", checkpath)
-		exists, err = goutils.FileOrDirExists(checkpath)
+		exists, err = goutils_io.FileOrDirExists(checkpath)
 		if exists {
 			retPath = checkpath
 		}
@@ -299,7 +301,7 @@ func getBuildConfigPath(env_typ string) string {
 		//check the current directory
 		checkpath = buildfilename
 		log.Println("buildfilename=", checkpath)
-		exists, err = goutils.FileOrDirExists(checkpath)
+		exists, err = goutils_io.FileOrDirExists(checkpath)
 		if exists {
 			retPath = checkpath
 		}
@@ -309,7 +311,7 @@ func getBuildConfigPath(env_typ string) string {
 		//check one directory up
 		checkpath = path.Join("../", buildfilename)
 		log.Println("../buildfilename=", checkpath)
-		exists, err = goutils.FileOrDirExists(checkpath)
+		exists, err = goutils_io.FileOrDirExists(checkpath)
 		if exists {
 			retPath = checkpath
 		}
@@ -319,7 +321,7 @@ func getBuildConfigPath(env_typ string) string {
 		//check one directory up
 		checkpath = path.Join("../../", buildfilename)
 		log.Println("../../buildfilename=", checkpath)
-		exists, err = goutils.FileOrDirExists(checkpath)
+		exists, err = goutils_io.FileOrDirExists(checkpath)
 		if exists {
 			retPath = checkpath
 		}
@@ -329,10 +331,10 @@ func getBuildConfigPath(env_typ string) string {
 }
 
 func getBuildConfig(bc *BuildConfig) error {
-	fmt.Println("begin getBuildConfig " + bc.git_folder)
-	//rv = make(map[string]interface{})
 
-	data, err := goutils.ParseJSONObject(bc.build_config_path)
+	fmt.Println("begin getBuildConfig " + bc.git_folder)
+
+	data, err := goutils_data.ParseJSONFromFile(bc.build_config_path)
 	if err != nil {
 		fmt.Println("unable to ParseJSONObject")
 		fmt.Println(err)
@@ -349,20 +351,20 @@ func getBuildConfig(bc *BuildConfig) error {
 				item := dataarr[i].(map[string]interface{}) //interface
 				if item["gitfolder"] == bc.git_folder {
 
-					bc.app_name = goutils.ToString(item["app_name"])
-					bc.database_server_name = goutils.ToString(item["database_server_name"])
-					bc.database_name = goutils.ToString(item["database_name"])
-					bc.database_username = goutils.ToString(item["database_username"])
-					bc.database_password = goutils.ToString(item["database_password"])
-					bc.external_port = goutils.ToString(item["external_port"])
-					bc.container_port = goutils.ToString(item["container_port"])
-					bc.container_registry = goutils.ToString(item["container_registry"])
-					bc.app_url = goutils.ToString(item["app_url"])
-					bc.app_url_appconfig = goutils.ToString(item["app_url_appconfig"])
-					bc.docker_manager_url = goutils.ToString(item["docker_manager_url"])
-					bc.container_replicas = goutils.ToString(item["container_replicas"])
-					bc.container_servicename = goutils.ToString(item["container_servicename"])
-					bc.appconfig_dst = goutils.ToString(item["appconfig_dst"])
+					bc.app_name = goutils_data.ToString(item["app_name"])
+					bc.database_server_name = goutils_data.ToString(item["database_server_name"])
+					bc.database_name = goutils_data.ToString(item["database_name"])
+					bc.database_username = goutils_data.ToString(item["database_username"])
+					bc.database_password = goutils_data.ToString(item["database_password"])
+					bc.external_port = goutils_data.ToString(item["external_port"])
+					bc.container_port = goutils_data.ToString(item["container_port"])
+					bc.container_registry = goutils_data.ToString(item["container_registry"])
+					bc.app_url = goutils_data.ToString(item["app_url"])
+					bc.app_url_appconfig = goutils_data.ToString(item["app_url_appconfig"])
+					bc.docker_manager_url = goutils_data.ToString(item["docker_manager_url"])
+					bc.container_replicas = goutils_data.ToString(item["container_replicas"])
+					bc.container_servicename = goutils_data.ToString(item["container_servicename"])
+					bc.appconfig_dst = goutils_data.ToString(item["appconfig_dst"])
 
 					fmt.Println("app_name=", bc.app_name)
 					fmt.Println("app_url=", bc.app_url)
@@ -386,7 +388,7 @@ func getBuildConfig(bc *BuildConfig) error {
 
 func getAppVersion(bc *BuildConfig) error {
 	var err error
-	bc.app_version, err = goutils.ReadFile("_version.txt")
+	bc.app_version, err = goutils_io.ReadFile("_version.txt")
 	bc.app_version = strings.ReplaceAll(bc.app_version, "\n", "")
 	bc.app_version = strings.ReplaceAll(bc.app_version, "\r", "")
 	bc.app_version = strings.ReplaceAll(bc.app_version, " ", "")
@@ -399,7 +401,7 @@ func getAppVersion(bc *BuildConfig) error {
 func copyAppConfig(bc *BuildConfig) error {
 	var content string
 	var err error
-	content, err = goutils.ReadFile("appconfig.json.template")
+	content, err = goutils_io.ReadFile("appconfig.json.template")
 	if err != nil {
 		fmt.Println("ERROR: reading appconfig.json.template")
 		return err
@@ -409,7 +411,7 @@ func copyAppConfig(bc *BuildConfig) error {
 	content = strings.ReplaceAll(content, "{app_builddate}", bc.app_builddate)
 	content = strings.ReplaceAll(content, "{app_version}", bc.app_version)
 
-	err = goutils.WriteFile(bc.appconfig_dst+"/appconfig.json", content, true)
+	err = goutils_io.WriteFile(bc.appconfig_dst+"/appconfig.json", content, true)
 	if err != nil {
 		return err
 	}
@@ -420,7 +422,7 @@ func copyDockerFile(bc *BuildConfig) error {
 	// ## populate Dockerfile ENV variables
 	var err error
 	var dockerFileContents string
-	dockerFileContents, err = goutils.ReadFile("Dockerfile")
+	dockerFileContents, err = goutils_io.ReadFile("Dockerfile")
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -442,7 +444,7 @@ func copyDockerFile(bc *BuildConfig) error {
 		dockerFileContents = strings.ReplaceAll(dockerFileContents, "{adminapi_port}", bc.adminapi_port)
 
 		//write new file
-		err = goutils.WriteFile(bc.builddir+"/Dockerfile", dockerFileContents, true)
+		err = goutils_io.WriteFile(bc.builddir+"/Dockerfile", dockerFileContents, true)
 		if err != nil {
 			fmt.Println(err)
 			return err
@@ -460,7 +462,7 @@ func buildContainer(bc *BuildConfig) error {
 	//- buildah bud -t node-webserver-prod:1.0
 	// docker build -t node-webserver-prod:1.11 .
 	imagename = bc.container_registry + "/" + bc.container_servicename + ":" + bc.app_version
-	output, err = goutils.ExecCMD(bc.buildDirFullPath, "docker", "build", "-t", imagename, ".")
+	output, err = goutils_io.ExecCMD(bc.buildDirFullPath, "docker", "build", "-t", imagename, ".")
 	if err != nil {
 		return err
 	}
@@ -469,7 +471,7 @@ func buildContainer(bc *BuildConfig) error {
 	//curl --unix-socket /var/run/docker.sock http://localhost/images/json
 	//output, err = goutils.ExecCMD("", "docker", "image", "ls")
 	//the query the unix socket returns a json string
-	output, err = goutils.ExecCMD("", "curl", "--unix-socket", "/var/run/docker.sock", "http://localhost/images/json")
+	output, err = goutils_io.ExecCMD("", "curl", "--unix-socket", "/var/run/docker.sock", "http://localhost/images/json")
 	if err != nil {
 		fmt.Println("ERROR: failed exec curl --unix-socket /var/run/docker.sock http://localhost/images/json")
 		return err
@@ -488,7 +490,7 @@ func publishContainer(bc *BuildConfig) error {
 	// example to rename a tag
 	// docker image tag node-webserver-prod:1.11 docker.corrections-tech.com/node-webserver-prod:1.11
 	// docker push node-webserver:1.11 docker.corrections-tech.com/node-webserver:1.11
-	_, err := goutils.ExecCMD("", "docker", "push", bc.container_registry+"/"+bc.container_servicename+":"+bc.app_version)
+	_, err := goutils_io.ExecCMD("", "docker", "push", bc.container_registry+"/"+bc.container_servicename+":"+bc.app_version)
 	if err != nil {
 		return err
 	}
@@ -504,7 +506,7 @@ func publishContainer(bc *BuildConfig) error {
 
 	url := schema + "://" + bc.container_registry + "/v2/" + bc.container_servicename + "/tags/list"
 	fmt.Println(url)
-	body, err = goutils.HTTPGetBody(url)
+	body, err = goutils_web.HTTPGetBody(url)
 	if err != nil {
 		fmt.Println("unable to get container_registry" + url)
 		return err
@@ -544,7 +546,7 @@ func deployToSwarm(bc *BuildConfig) error {
 	// 	return err
 	// }
 
-	output, err = goutils.HTTPGetBody(bc.docker_manager_url + "/services/" + bc.container_servicename)
+	output, err = goutils_web.HTTPGetBody(bc.docker_manager_url + "/services/" + bc.container_servicename)
 	if err != nil || output == "" {
 		fmt.Println("ERROR: failed to get service from " + bc.docker_manager_url + "/services")
 		return err
@@ -578,21 +580,24 @@ func deployToSwarm(bc *BuildConfig) error {
 
 		//get the service_index
 		url = bc.docker_manager_url + "/services/" + bc.container_servicename
-		output, err = goutils.HTTPGetBody(url)
+		output, err = goutils_web.HTTPGetBody(url)
 		if err != nil {
 			log.Println("unable to get services" + url)
 			return err
 		}
 
 		//output := `{"ID":"umb8mcr05k0a9lmn0a5cxnszv","Version":{"Index":1821},"CreatedAt":"2023-10-23T23:00:41.291429436Z","UpdatedAt":"2023-10-24T00:29:57.150690114Z","Spec":{"Name":"nginx1","Labels":{},"TaskTemplate":{"ContainerSpec":{"Image":"nginx:stable-alpine3.17-slim","Isolation":"default"},"RestartPolicy":{"Condition":"any","MaxAttempts":3},"ForceUpdate":1,"Runtime":"container"},"Mode":{"Replicated":{"Replicas":3}}},"PreviousSpec":{"Name":"nginx1","Labels":{},"TaskTemplate":{"ContainerSpec":{"Image":"nginx:latest","Isolation":"default"},"RestartPolicy":{"Condition":"any","MaxAttempts":3},"ForceUpdate":1,"Runtime":"container"},"Mode":{"Replicated":{"Replicas":3}}},"Endpoint":{"Spec":{}},"UpdateStatus":{"State":"completed","StartedAt":"2023-10-24T00:29:32.05242763Z","CompletedAt":"2023-10-24T00:29:57.15066874Z","Message":"update completed"}}`
-		jsonobj, err := goutils.ParseJSON(output)
+		jsonobj := make(map[string]interface{})
+
+		err := goutils_data.ParseJSONObject(output, &jsonobj)
 		if err != nil {
 			log.Println("unable to parse json" + output)
 			return err
 		}
+
 		version := jsonobj["Version"]
 		versionmap := version.(map[string]interface{})
-		service_index = goutils.ToString(versionmap["Index"])
+		service_index = goutils_data.ToString(versionmap["Index"])
 
 		log.Println(versionmap)
 
@@ -636,7 +641,7 @@ func deployToSwarm(bc *BuildConfig) error {
 		}
 	}`
 
-		goutils.WriteFile("build/service.json", jsond, true)
+		goutils_io.WriteFile("build/service.json", jsond, true)
 
 		url = bc.docker_manager_url + "/services/" + bc.container_servicename + "/update?version=" + service_index
 
@@ -644,7 +649,7 @@ func deployToSwarm(bc *BuildConfig) error {
 		fmt.Println(jsond)
 
 		//curl -X POST -H "Content-Type: application/json" -d @service-config.json http://10.20.1.155:2375/services/create
-		output, err = goutils.HTTPostJson(url, jsond)
+		output, err = goutils_web.HTTPostJson(url, jsond)
 		if err != nil {
 			fmt.Println("failed to deployToSwarm")
 			return err
@@ -700,7 +705,7 @@ func deployToSwarm(bc *BuildConfig) error {
 		fmt.Println(jsond)
 
 		//curl -X POST -H "Content-Type: application/json" -d @service-config.json http://10.20.1.155:2375/services/create
-		output, err = goutils.HTTPostJson(url, jsond)
+		output, err = goutils_web.HTTPostJson(url, jsond)
 		if err != nil {
 			fmt.Println("failed to deployToSwarm")
 			return err
@@ -716,7 +721,7 @@ func deployToSwarm(bc *BuildConfig) error {
 		counter = counter + 1
 
 		//output, err = goutils.ExecCMD("", "docker", "service", "ls")
-		output, err = goutils.HTTPGetBody(bc.docker_manager_url + "/services/" + bc.container_servicename)
+		output, err = goutils_web.HTTPGetBody(bc.docker_manager_url + "/services/" + bc.container_servicename)
 		if err != nil || output == "" {
 			fmt.Println("ERROR: failed to get service from " + bc.docker_manager_url + "/services")
 			return err
@@ -753,7 +758,7 @@ func checkAppState(url string) error {
 
 		counter = counter + 1
 
-		code, err = goutils.HTTPGetCode(url)
+		code, err = goutils_web.HTTPGetCode(url)
 		if err != nil {
 			fmt.Println("error on HTTPGetCode")
 			fmt.Println(err)
@@ -784,21 +789,21 @@ func checkAppVersion(bc *BuildConfig) error {
 
 		counter = counter + 1
 
-		body, err := goutils.HTTPGetBody(url)
+		body, err := goutils_web.HTTPGetBody(url)
 		if err != nil {
 			return err
 		}
 
 		fmt.Println(body)
 
-		var jsonData map[string]interface{}
-		jsonData, err = goutils.ParseJSON(body)
+		jsonData := make(map[string]interface{})
+		err = goutils_data.ParseJSONObject(body, &jsonData)
 		if err != nil {
 			fmt.Println("error parsing json")
 			return err
 		}
 
-		if goutils.ToString(jsonData["app_version"]) == bc.app_version {
+		if goutils_data.ToString(jsonData["app_version"]) == bc.app_version {
 			break
 		}
 
